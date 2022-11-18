@@ -10,12 +10,9 @@ import com.mongodb.MongoClient
 import com.mongodb.client.model
 import com.mongodb.spark.MongoSpark
 import org.apache.spark.sql.SparkSession
-
-
-
+//import com.mongodb.client.model.Filters.{and, geoWithinCenter, gte, lte}
+import org.mongodb.scala.model.{Filters, Indexes}
 import java.text.SimpleDateFormat
-
-
 
 object TweetsManipulator {
   def main(args: Array[String]): Unit = {
@@ -65,5 +62,29 @@ object TweetsManipulator {
     dataset = dataset.withColumn("created_at", timestamp)
     MongoSpark.save(dataset, confWrite)
 
+    /*
+    3.the geo-coordinates of tweets should be indexed properly to ensure
+    a fast spatial-based retrieval
+     */
+
+    val mongoClient = new MongoClient("localhost", 27017)
+    val Tweets = mongoClient.getDatabase("Tweets")
+    val tweets = Tweets.getCollection("tweets")
+    tweets.createIndex(Indexes.geo2dsphere("coordinates.coordinates"))
+    tweets.createIndex(Indexes.ascending("created_at"))
+
+    /*
+    4.calculate the number of occurrences of word w published within
+    a circular region of raduis (r), having a central point of (lon, lat),
+    mentioned in tweets published during the time interval (start, end).
+    Perform this operation by two ways:
+        a. using MongoSpark, by collecting tweets and filtering
+        them spatio-temporally using dataframe apis.
+        b. using mongodb library by sending a normal mongoDB query
+        to filter by time and space.
+        c. Text indexing is optional
+     5.Run the application as follows:
+        WordFreqCalculator.scala w r lon lat start end
+     */
   }
 }
