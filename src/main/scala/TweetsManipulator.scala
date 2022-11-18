@@ -65,10 +65,5 @@ object TweetsManipulator {
     dataset = dataset.withColumn("created_at", timestamp)
     MongoSpark.save(dataset, confWrite)
 
-
-
-
-
-
   }
 }
